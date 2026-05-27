@@ -179,6 +179,14 @@
         "diameter_mm": { "$ref": "../common.schema.json#/$defs/Konfidens" }
       }
     },
+    "VerifikasjonVurdering": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "kvalitet": { "$ref": "../common.schema.json#/$defs/Konfidens" },
+        "popularitet": { "$ref": "../common.schema.json#/$defs/Konfidens" }
+      }
+    },
     "VerifikasjonTelt": {
       "type": "object",
       "description": "Konfidens-score 0-10 per property. Speiler data-strukturen. Hver leaf har sin egen konfidens. Lister (nettbutikker, tester, forum, kilder, farger) har én score for hele lista — per-item konfidens lever på selve item-objektene.",
@@ -195,7 +203,8 @@
         "yttertelt": { "$ref": "#/$defs/VerifikasjonYtterTelt" },
         "innertelt": { "$ref": "#/$defs/VerifikasjonInnerTelt" },
         "bunn": { "$ref": "#/$defs/VerifikasjonBunn" },
-        "stenger": { "$ref": "#/$defs/VerifikasjonStenger" }
+        "stenger": { "$ref": "#/$defs/VerifikasjonStenger" },
+        "vurdering": { "$ref": "#/$defs/VerifikasjonVurdering" }
       }
     },
     "Telt": {

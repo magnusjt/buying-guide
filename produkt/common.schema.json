@@ -79,6 +79,36 @@
       "maximum": 10,
       "description": "Konfidens-score 0-10. 10 = verifisert mot live autoritativ kilde. 0 = gjetning."
     },
+    "Score": {
+      "anyOf": [
+        { "type": "integer", "minimum": 0, "maximum": 10 },
+        { "type": "null" }
+      ],
+      "description": "Vurderingsscore 0-10 (eller null hvis ikke vurdert)."
+    },
+    "Vurdering": {
+      "type": "object",
+      "description": "Subjektive vurderinger av produktet basert på tester, anmeldelser og diskusjonsvolum. Hver score skal vurderes uavhengig — kvalitet handler om hvor godt produktet fungerer, popularitet om hvor mye det diskuteres/selges.",
+      "additionalProperties": false,
+      "properties": {
+        "kvalitet": {
+          "$ref": "#/$defs/Score",
+          "description": "Estimert kvalitet 0-10 basert på tester, anmeldelser, ekspertvurderinger. 10 = best i klassen, 0 = svært dårlig."
+        },
+        "kvalitet_begrunnelse": {
+          "type": ["string", "null"],
+          "description": "Kort forklaring av hvorfor denne kvalitets-scoren ble gitt (hva tester/anmeldelser sier)."
+        },
+        "popularitet": {
+          "$ref": "#/$defs/Score",
+          "description": "Estimert popularitet 0-10 basert på diskusjonsvolum (forum, sosiale medier), butikkratings og antall anmeldelser. 10 = bredt anerkjent klassiker, 0 = ukjent/aldri nevnt."
+        },
+        "popularitet_begrunnelse": {
+          "type": ["string", "null"],
+          "description": "Kort forklaring av populariteten (hvilke signaler den er basert på)."
+        }
+      }
+    },
     "Nettbutikk": {
       "type": "object",
       "required": ["navn", "url"],
@@ -143,7 +173,8 @@
           "type": "array",
           "items": { "$ref": "#/$defs/Url" },
           "description": "Alle URL-er brukt som referanse for denne oppføringen"
-        }
+        },
+        "vurdering": { "$ref": "#/$defs/Vurdering" }
       }
     }
   }

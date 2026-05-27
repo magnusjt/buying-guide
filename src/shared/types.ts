@@ -37,6 +37,18 @@ export interface Lenkeoppforing {
   konfidens?: Konfidens;
 }
 
+/** Subjektive vurderinger basert på tester, anmeldelser, diskusjonsvolum. */
+export interface Vurdering {
+  /** Estimert kvalitet 0-10. 10 = best i klassen, 0 = svært dårlig. null = ikke vurdert. */
+  kvalitet?: number | null;
+  /** Kort forklaring av hvorfor kvalitets-scoren ble gitt. */
+  kvalitet_begrunnelse?: string | null;
+  /** Estimert popularitet 0-10. 10 = bredt anerkjent klassiker, 0 = ukjent. null = ikke vurdert. */
+  popularitet?: number | null;
+  /** Kort forklaring av popularitets-scoren (hvilke signaler den er basert på). */
+  popularitet_begrunnelse?: string | null;
+}
+
 export interface ProduktFellesfelter {
   id: ProduktId;
   navn: string;
@@ -47,6 +59,7 @@ export interface ProduktFellesfelter {
   tester_anmeldelser?: Lenkeoppforing[];
   forum_meninger?: Lenkeoppforing[];
   kilder?: string[];
+  vurdering?: Vurdering;
 }
 
 export type StatusKort = 'paa' | 'utgaatt' | 'ukjent';

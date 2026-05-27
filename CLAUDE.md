@@ -76,6 +76,46 @@ Eksempel-blokk i `verifikasjon`-feltet:
 ```
 Hver butikk/test/forum-oppføring har i tillegg sitt eget `konfidens`-felt i listen.
 
+## Vurderings-system (kvalitet og popularitet)
+
+I tillegg til konfidens (hvor sikre vi er på dataen) har hvert produkt et `vurdering`-objekt med to subjektive scores 0-10:
+
+- **`vurdering.kvalitet`** — Hvor godt produktet faktisk fungerer, basert på tester og anmeldelser. Begrunnelse i `kvalitet_begrunnelse`.
+- **`vurdering.popularitet`** — Hvor mye produktet diskuteres, anbefales, og selges. Begrunnelse i `popularitet_begrunnelse`.
+
+Vises som fargekodede tall i HTML-viewer (grønn ≥8, gul 5-7, oransje 2-4, rød 0-1).
+
+**Rubrikk for kvalitet (0-10):**
+
+| Score | Tolkning | Eksempel |
+|-------|----------|----------|
+| 10 | Industry-leading, brukt i ekstreme ekspedisjoner | Hilleberg Keron 4 GT, Hilleberg Atlas, MSR Remote |
+| 8-9 | Utmerket, kjent for slitestyrke/ytelse | Hilleberg Akto/Nallo, Helsport Spitsbergen X-Trem |
+| 6-7 | God for sitt formål | De fleste mid-range |
+| 4-5 | OK, men begrensninger | Budsjett-spesialist |
+| 2-3 | Adekvat | Billig budsjett |
+| 0-1 | Dårlig kvalitet | |
+
+**Rubrikk for popularitet (0-10):**
+
+| Score | Tolkning | Eksempel |
+|-------|----------|----------|
+| 10 | Ikonisk, diskutert overalt | Hilleberg Akto |
+| 8-9 | Velkjent og anbefalt | Helsport Reinsfjell Pro, MSR Hubba Hubba |
+| 6-7 | Kjent blant entusiaster | |
+| 4-5 | Litt anerkjennelse | |
+| 2-3 | Nisje/obskur | |
+| 0-1 | Ukjent | |
+
+**Signaler å bruke for vurdering:**
+- Tester (UTEMagasinet, FriFlyt, Villmarksliv) — direkte for kvalitet
+- Antall anmeldelser i `tester_anmeldelser` og `forum_meninger` — popularitet
+- Butikkratinger (snitt fra `nettbutikker_topp5[].rating`) — popularitet + kvalitet
+- Antall butikker som fører produktet — popularitet
+- Konkrete sitater fra tester/forum — begrunnelse-tekst
+
+**Konfidens på vurdering:** `verifikasjon.vurdering.kvalitet` og `verifikasjon.vurdering.popularitet` bør være lave (0-3) hvis basert på generell kunnskap, høyere (6-8) hvis basert på faktiske tester/diskusjoner samlet inn.
+
 ## Teknologistack
 
 - **React 19 + TypeScript** for UI

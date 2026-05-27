@@ -105,6 +105,10 @@ export interface VerifikasjonStenger {
   antall?: number;
   diameter_mm?: number;
 }
+export interface VerifikasjonVurdering {
+  kvalitet?: number;
+  popularitet?: number;
+}
 
 export interface VerifikasjonTelt {
   status?: VerifikasjonStatus;
@@ -119,6 +123,7 @@ export interface VerifikasjonTelt {
   innertelt?: VerifikasjonInnerTelt;
   bunn?: VerifikasjonBunn;
   stenger?: VerifikasjonStenger;
+  vurdering?: VerifikasjonVurdering;
 }
 
 export interface Telt extends ProduktFellesfelter {

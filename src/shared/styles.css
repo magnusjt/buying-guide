@@ -42,7 +42,7 @@ a:hover { text-decoration: underline; }
   margin: 16px 0;
   align-items: center;
 }
-.controls input,
+.controls > input,
 .controls select {
   padding: 8px 12px;
   border: 1px solid var(--border);
@@ -50,7 +50,7 @@ a:hover { text-decoration: underline; }
   background: var(--card);
   font-size: 0.95rem;
 }
-.controls input { flex: 1; min-width: 240px; }
+.controls > input[type="search"] { flex: 1; min-width: 240px; }
 .controls label { font-size: 0.85rem; color: var(--muted); display: inline-flex; gap: 6px; align-items: center; }
 .controls button {
   padding: 8px 14px;
@@ -73,10 +73,8 @@ a:hover { text-decoration: underline; }
 .badge.utgaatt { background: #fee2e2; color: #b91c1c; }
 .badge.ukjent { background: #f3f4f6; color: #6b7280; }
 
-/* Konfidens-indikatorer per celle/link. Score 10 = ingen indikator (autoritativ). */
-.konf-hi   { background: rgba(16, 185, 129, 0.10); padding: 1px 4px; border-radius: 3px; }
-.konf-mid  { background: rgba(245, 158, 11, 0.13); padding: 1px 4px; border-radius: 3px; }
-.konf-low  { background: rgba(249, 115, 22, 0.16); padding: 1px 4px; border-radius: 3px; }
-.konf-zero { background: rgba(239, 68, 68, 0.16);  padding: 1px 4px; border-radius: 3px; }
-.konf-na   { background: rgba(107, 114, 128, 0.10); padding: 1px 4px; border-radius: 3px; }
-a.konf-hi, a.konf-mid, a.konf-low, a.konf-zero, a.konf-na { display: inline-block; }
+/* Konfidens-indikatorer per celle/link. Bare scores < 7 markeres. */
+.konf-mid  { background: rgba(245, 158, 11, 0.16); padding: 1px 4px; border-radius: 3px; }
+.konf-low  { background: rgba(249, 115, 22, 0.20); padding: 1px 4px; border-radius: 3px; }
+.konf-zero { background: rgba(239, 68, 68, 0.22);  padding: 1px 4px; border-radius: 3px; }
+a.konf-mid, a.konf-low, a.konf-zero { display: inline-block; }
