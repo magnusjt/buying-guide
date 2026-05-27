@@ -1,0 +1,223 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://buying-guides/produkt/telt/telt.schema.json",
+  "title": "Telt-data",
+  "description": "Schema for telt/telt.yaml — alle telt i kjøpsguiden.",
+  "type": "object",
+  "required": ["telt"],
+  "additionalProperties": false,
+  "properties": {
+    "$schema": { "type": "string" },
+    "telt": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/Telt" }
+    }
+  },
+  "$defs": {
+    "Segment": {
+      "type": "string",
+      "enum": [
+        "lett-turtelt",
+        "ekspedisjon",
+        "familietelt",
+        "lavvo-tipi",
+        "tarp-hammock",
+        "bivuakk"
+      ]
+    },
+    "Konstruksjon": {
+      "type": "string",
+      "enum": [
+        "tunnel",
+        "kuppel",
+        "geodesisk",
+        "ryggaas",
+        "hybrid",
+        "tarp",
+        "lavvo",
+        "tipi",
+        "bivy"
+      ]
+    },
+    "Spesifikasjoner": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "soveplasser": {
+          "type": ["integer", "null"],
+          "minimum": 1,
+          "maximum": 12
+        },
+        "sesong": {
+          "anyOf": [
+            { "type": "integer", "minimum": 1, "maximum": 4 },
+            { "type": "string", "enum": ["3+", "4+"] },
+            { "type": "null" }
+          ]
+        },
+        "konstruksjon": {
+          "anyOf": [
+            { "$ref": "#/$defs/Konstruksjon" },
+            { "type": "null" }
+          ]
+        },
+        "antall_innganger": { "type": ["integer", "null"], "minimum": 0 },
+        "antall_fortelt": { "type": ["integer", "null"], "minimum": 0 },
+        "fritthengende": { "type": ["boolean", "null"] },
+        "vekt_minimum_kg": { "type": ["number", "null"], "minimum": 0 },
+        "vekt_pakket_kg": { "type": ["number", "null"], "minimum": 0 },
+        "pakkmaal_cm": { "type": ["string", "null"] }
+      }
+    },
+    "YtterTelt": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "materiale": { "type": ["string", "null"] },
+        "vannsoyle_mm": { "type": ["integer", "null"], "minimum": 0 },
+        "lengde_cm": { "type": ["number", "null"], "minimum": 0 },
+        "bredde_cm": { "type": ["number", "null"], "minimum": 0 },
+        "hoyde_cm": { "type": ["number", "null"], "minimum": 0 }
+      }
+    },
+    "InnerTelt": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "materiale": { "type": ["string", "null"] },
+        "lengde_cm": { "type": ["number", "null"], "minimum": 0 },
+        "bredde_cm": { "type": ["number", "null"], "minimum": 0 },
+        "hoyde_cm": { "type": ["number", "null"], "minimum": 0 }
+      }
+    },
+    "Bunn": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "materiale": { "type": ["string", "null"] },
+        "vannsoyle_mm": { "type": ["integer", "null"], "minimum": 0 }
+      }
+    },
+    "Stenger": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "materiale": { "type": ["string", "null"] },
+        "antall": { "type": ["integer", "null"], "minimum": 0 },
+        "diameter_mm": { "type": ["number", "null"], "minimum": 0 }
+      }
+    },
+    "VerifikasjonStatus": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "paa_markedet": { "$ref": "../common.schema.json#/$defs/Konfidens" },
+        "utgaatt_dato": { "$ref": "../common.schema.json#/$defs/Konfidens" },
+        "erstatningsmodell": { "$ref": "../common.schema.json#/$defs/Konfidens" },
+        "notater": { "$ref": "../common.schema.json#/$defs/Konfidens" }
+      }
+    },
+    "VerifikasjonPris": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "nok": { "$ref": "../common.schema.json#/$defs/Konfidens" },
+        "dato_sjekket": { "$ref": "../common.schema.json#/$defs/Konfidens" },
+        "prisjakt_url": { "$ref": "../common.schema.json#/$defs/Konfidens" }
+      }
+    },
+    "VerifikasjonSpesifikasjoner": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "soveplasser": { "$ref": "../common.schema.json#/$defs/Konfidens" },
+        "sesong": { "$ref": "../common.schema.json#/$defs/Konfidens" },
+        "konstruksjon": { "$ref": "../common.schema.json#/$defs/Konfidens" },
+        "antall_innganger": { "$ref": "../common.schema.json#/$defs/Konfidens" },
+        "antall_fortelt": { "$ref": "../common.schema.json#/$defs/Konfidens" },
+        "fritthengende": { "$ref": "../common.schema.json#/$defs/Konfidens" },
+        "vekt_minimum_kg": { "$ref": "../common.schema.json#/$defs/Konfidens" },
+        "vekt_pakket_kg": { "$ref": "../common.schema.json#/$defs/Konfidens" },
+        "pakkmaal_cm": { "$ref": "../common.schema.json#/$defs/Konfidens" }
+      }
+    },
+    "VerifikasjonYtterTelt": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "materiale": { "$ref": "../common.schema.json#/$defs/Konfidens" },
+        "vannsoyle_mm": { "$ref": "../common.schema.json#/$defs/Konfidens" },
+        "lengde_cm": { "$ref": "../common.schema.json#/$defs/Konfidens" },
+        "bredde_cm": { "$ref": "../common.schema.json#/$defs/Konfidens" },
+        "hoyde_cm": { "$ref": "../common.schema.json#/$defs/Konfidens" }
+      }
+    },
+    "VerifikasjonInnerTelt": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "materiale": { "$ref": "../common.schema.json#/$defs/Konfidens" },
+        "lengde_cm": { "$ref": "../common.schema.json#/$defs/Konfidens" },
+        "bredde_cm": { "$ref": "../common.schema.json#/$defs/Konfidens" },
+        "hoyde_cm": { "$ref": "../common.schema.json#/$defs/Konfidens" }
+      }
+    },
+    "VerifikasjonBunn": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "materiale": { "$ref": "../common.schema.json#/$defs/Konfidens" },
+        "vannsoyle_mm": { "$ref": "../common.schema.json#/$defs/Konfidens" }
+      }
+    },
+    "VerifikasjonStenger": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "materiale": { "$ref": "../common.schema.json#/$defs/Konfidens" },
+        "antall": { "$ref": "../common.schema.json#/$defs/Konfidens" },
+        "diameter_mm": { "$ref": "../common.schema.json#/$defs/Konfidens" }
+      }
+    },
+    "VerifikasjonTelt": {
+      "type": "object",
+      "description": "Konfidens-score 0-10 per property. Speiler data-strukturen. Hver leaf har sin egen konfidens. Lister (nettbutikker, tester, forum, kilder, farger) har én score for hele lista — per-item konfidens lever på selve item-objektene.",
+      "additionalProperties": false,
+      "properties": {
+        "status": { "$ref": "#/$defs/VerifikasjonStatus" },
+        "pris": { "$ref": "#/$defs/VerifikasjonPris" },
+        "nettbutikker_topp5": { "$ref": "../common.schema.json#/$defs/Konfidens" },
+        "tester_anmeldelser": { "$ref": "../common.schema.json#/$defs/Konfidens" },
+        "forum_meninger": { "$ref": "../common.schema.json#/$defs/Konfidens" },
+        "kilder": { "$ref": "../common.schema.json#/$defs/Konfidens" },
+        "farger_tilgjengelig": { "$ref": "../common.schema.json#/$defs/Konfidens" },
+        "spesifikasjoner": { "$ref": "#/$defs/VerifikasjonSpesifikasjoner" },
+        "yttertelt": { "$ref": "#/$defs/VerifikasjonYtterTelt" },
+        "innertelt": { "$ref": "#/$defs/VerifikasjonInnerTelt" },
+        "bunn": { "$ref": "#/$defs/VerifikasjonBunn" },
+        "stenger": { "$ref": "#/$defs/VerifikasjonStenger" }
+      }
+    },
+    "Telt": {
+      "allOf": [
+        { "$ref": "../common.schema.json#/$defs/ProduktFellesfelter" },
+        {
+          "type": "object",
+          "required": ["segment"],
+          "properties": {
+            "segment": { "$ref": "#/$defs/Segment" },
+            "spesifikasjoner": { "anyOf": [{ "$ref": "#/$defs/Spesifikasjoner" }, { "type": "null" }] },
+            "yttertelt": { "anyOf": [{ "$ref": "#/$defs/YtterTelt" }, { "type": "null" }] },
+            "innertelt": { "anyOf": [{ "$ref": "#/$defs/InnerTelt" }, { "type": "null" }] },
+            "bunn": { "anyOf": [{ "$ref": "#/$defs/Bunn" }, { "type": "null" }] },
+            "stenger": { "anyOf": [{ "$ref": "#/$defs/Stenger" }, { "type": "null" }] },
+            "farger_tilgjengelig": {
+              "type": "array",
+              "items": { "type": "string" }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

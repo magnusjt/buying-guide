@@ -1,0 +1,30 @@
+{
+  "name": "buying-guides",
+  "version": "1.0.0",
+  "description": "Kjøpsguider for norske forbrukere — strukturert data + sider per produkttype.",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build && npm run validate",
+    "preview": "vite preview",
+    "validate": "tsx scripts/validate.ts"
+  },
+  "dependencies": {
+    "react": "^19.2.6",
+    "react-dom": "^19.2.6",
+    "tabulator-tables": "^6.4.0"
+  },
+  "devDependencies": {
+    "@types/node": "^25.9.1",
+    "@types/react": "^19.2.15",
+    "@types/react-dom": "^19.2.3",
+    "@types/tabulator-tables": "^6.3.3",
+    "@vitejs/plugin-react": "^6.0.2",
+    "ajv": "^8.20.0",
+    "ajv-formats": "^3.0.1",
+    "tsx": "^4.22.3",
+    "typescript": "^6.0.3",
+    "vite": "^8.0.14"
+  }
+}

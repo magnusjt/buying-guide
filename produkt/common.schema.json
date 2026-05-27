@@ -1,0 +1,150 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://buying-guides/produkt/common.schema.json",
+  "title": "Felles definisjoner for alle produktguider",
+  "description": "Delte felter som brukes på tvers av alle produkttyper.",
+  "$defs": {
+    "Id": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9-]*$",
+      "description": "Unik kebab-case id, f.eks. hilleberg-akto"
+    },
+    "Url": {
+      "type": "string",
+      "format": "uri",
+      "pattern": "^https?://"
+    },
+    "DatoYM": {
+      "type": "string",
+      "pattern": "^[0-9]{4}-(0[1-9]|1[0-2])$",
+      "description": "ISO-dato i format YYYY-MM"
+    },
+    "DatoYMD": {
+      "type": "string",
+      "pattern": "^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$",
+      "description": "ISO-dato i format YYYY-MM-DD"
+    },
+    "Status": {
+      "type": "object",
+      "required": ["paa_markedet"],
+      "additionalProperties": false,
+      "properties": {
+        "paa_markedet": {
+          "type": "boolean",
+          "description": "true hvis produktet selges nytt nå"
+        },
+        "utgaatt_dato": {
+          "anyOf": [
+            { "$ref": "#/$defs/DatoYM" },
+            { "type": "null" }
+          ],
+          "description": "Når produktet ble utgått (YYYY-MM), eller null"
+        },
+        "erstatningsmodell": {
+          "anyOf": [
+            { "$ref": "#/$defs/Id" },
+            { "type": "null" }
+          ],
+          "description": "id til etterfølgermodell, eller null"
+        },
+        "notater": {
+          "type": ["string", "null"]
+        }
+      }
+    },
+    "Pris": {
+      "type": "object",
+      "required": ["nok", "dato_sjekket"],
+      "additionalProperties": false,
+      "properties": {
+        "nok": {
+          "type": ["number", "null"],
+          "minimum": 0,
+          "description": "Laveste pris funnet i NOK"
+        },
+        "dato_sjekket": {
+          "$ref": "#/$defs/DatoYMD"
+        },
+        "prisjakt_url": {
+          "anyOf": [
+            { "$ref": "#/$defs/Url" },
+            { "type": "null" }
+          ]
+        }
+      }
+    },
+    "Konfidens": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 10,
+      "description": "Konfidens-score 0-10. 10 = verifisert mot live autoritativ kilde. 0 = gjetning."
+    },
+    "Nettbutikk": {
+      "type": "object",
+      "required": ["navn", "url"],
+      "additionalProperties": false,
+      "properties": {
+        "navn": { "type": "string" },
+        "pris_nok": { "type": ["number", "null"], "minimum": 0 },
+        "lager": {
+          "type": ["string", "null"],
+          "description": "f.eks. 'På lager', 'Bestillingsvare', 'Utsolgt'"
+        },
+        "rating": {
+          "type": ["number", "null"],
+          "minimum": 0,
+          "maximum": 5
+        },
+        "url": { "$ref": "#/$defs/Url" },
+        "konfidens": { "$ref": "#/$defs/Konfidens" }
+      }
+    },
+    "Lenkeoppforing": {
+      "type": "object",
+      "required": ["tittel", "url"],
+      "additionalProperties": false,
+      "properties": {
+        "tittel": { "type": "string" },
+        "kilde": { "type": ["string", "null"] },
+        "url": { "$ref": "#/$defs/Url" },
+        "dato": {
+          "anyOf": [
+            { "$ref": "#/$defs/DatoYM" },
+            { "$ref": "#/$defs/DatoYMD" },
+            { "type": "null" }
+          ]
+        },
+        "konfidens": { "$ref": "#/$defs/Konfidens" }
+      }
+    },
+    "ProduktFellesfelter": {
+      "type": "object",
+      "required": ["id", "navn", "merke"],
+      "properties": {
+        "id": { "$ref": "#/$defs/Id" },
+        "navn": { "type": "string", "minLength": 1 },
+        "merke": { "type": "string", "minLength": 1 },
+        "status": { "$ref": "#/$defs/Status" },
+        "pris": { "$ref": "#/$defs/Pris" },
+        "nettbutikker_topp5": {
+          "type": "array",
+          "maxItems": 5,
+          "items": { "$ref": "#/$defs/Nettbutikk" }
+        },
+        "tester_anmeldelser": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/Lenkeoppforing" }
+        },
+        "forum_meninger": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/Lenkeoppforing" }
+        },
+        "kilder": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/Url" },
+          "description": "Alle URL-er brukt som referanse for denne oppføringen"
+        }
+      }
+    }
+  }
+}
