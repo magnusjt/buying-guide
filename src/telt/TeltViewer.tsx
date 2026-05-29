@@ -21,6 +21,7 @@ import { TabulatorTable, type TabulatorHandle } from '../shared/TabulatorTable';
 import { useMediaQuery } from '../shared/useMediaQuery';
 import { TeltDetail } from './TeltDetail';
 import { TeltCardList } from './TeltCardList';
+import { MobileFilterSheet } from './MobileFilterSheet';
 import { ColumnPicker } from './ColumnPicker';
 
 /** Snitt-konfidens under denne grensen regnes som "lav" i kvalitets-filteret.
@@ -906,6 +907,68 @@ export function sortRows(rows: Row[], key: SortKey): Row[] {
   return copy;
 }
 
+/** Numeriske min/maks-filtre i mobil-filter-arket. `field` peker på et
+ *  number-felt i Row. Speiler desktop-tabellens min/maks-kolonnefiltre. */
+export const RANGE_FILTERS: { field: keyof Row; label: string; step?: number }[] = [
+  { field: 'soveplasser', label: 'Soveplasser' },
+  { field: 'vekt_minimum_kg', label: 'Vekt min (kg)', step: 0.1 },
+  { field: 'pris_nok', label: 'Pris (kr)' },
+];
+
+/** Kategoriske select-filtre i mobil-filter-arket. Verdier hentes dynamisk fra
+ *  dataen (distinkte verdier). `sesong` kan være tall eller streng (f.eks. "3-4"),
+ *  derfor matches den som streng. */
+export const LIST_FILTERS: { field: 'konstruksjon' | 'sesong'; label: string }[] = [
+  { field: 'sesong', label: 'Sesong' },
+  { field: 'konstruksjon', label: 'Konstruksjon' },
+];
+
+export interface MobileFilterState {
+  sesong: string;
+  konstruksjon: string;
+  /** Per range-felt: min/maks som strenger ('' = ubegrenset). */
+  ranges: Record<string, { min: string; max: string }>;
+}
+
+export function emptyMobileFilters(): MobileFilterState {
+  return {
+    sesong: '',
+    konstruksjon: '',
+    ranges: Object.fromEntries(RANGE_FILTERS.map((f) => [f.field, { min: '', max: '' }])),
+  };
+}
+
+/** Antall aktive mobil-filtre (for badge på Filtrer-knappen). */
+export function countActiveMobileFilters(f: MobileFilterState): number {
+  let n = 0;
+  if (f.sesong) n++;
+  if (f.konstruksjon) n++;
+  for (const { field } of RANGE_FILTERS) {
+    const r = f.ranges[field];
+    if (r && (r.min !== '' || r.max !== '')) n++;
+  }
+  return n;
+}
+
+/** Anvender de strukturerte mobil-filtrene (lister + min/maks) på en rad. */
+export function applyMobileFilters(row: Row, f: MobileFilterState): boolean {
+  if (f.sesong && String(row.sesong ?? '') !== f.sesong) return false;
+  if (f.konstruksjon && row.konstruksjon !== f.konstruksjon) return false;
+  for (const { field } of RANGE_FILTERS) {
+    const r = f.ranges[field];
+    if (!r) continue;
+    const raw = row[field];
+    const num = raw == null ? null : Number(raw);
+    if (r.min !== '') {
+      if (num == null || num < Number(r.min)) return false;
+    }
+    if (r.max !== '') {
+      if (num == null || num > Number(r.max)) return false;
+    }
+  }
+  return true;
+}
+
 interface Props {
   telt: Telt[];
 }
@@ -941,15 +1004,23 @@ export function TeltViewer({ telt }: Props) {
   const [showLowQuality, setShowLowQuality] = useState(false);
   /** Sortering for mobil-lista (tabellen sorteres ved kolonneklikk i stedet). */
   const [sortKey, setSortKey] = useState<SortKey>('score');
+  /** Strukturerte mobil-filtre (sesong, konstruksjon, min/maks). */
+  const [mobileFilters, setMobileFilters] = useState<MobileFilterState>(emptyMobileFilters);
+  const [filterSheetOpen, setFilterSheetOpen] = useState(false);
   const [visible, setVisible] = useState(rows.length);
   const [tableReady, setTableReady] = useState(false);
 
   /** Filtrert + sortert rad-liste for mobil-visningen. Cheap nok (~234 rader)
    *  til å regnes alltid; brukes også til prev/next-rekkefølge på mobil. */
   const mobileRows = useMemo(
-    () => sortRows(rows.filter((r) => matchesFilters(r, query, showLowQuality)), sortKey),
-    [rows, query, showLowQuality, sortKey],
+    () =>
+      sortRows(
+        rows.filter((r) => matchesFilters(r, query, showLowQuality) && applyMobileFilters(r, mobileFilters)),
+        sortKey,
+      ),
+    [rows, query, showLowQuality, mobileFilters, sortKey],
   );
+  const activeFilterCount = countActiveMobileFilters(mobileFilters);
   const [selectedId, setSelectedId] = useState<string | null>(() => {
     if (typeof window === 'undefined') return null;
     const id = new URLSearchParams(window.location.search).get('telt');
@@ -1044,20 +1115,21 @@ export function TeltViewer({ telt }: Props) {
     if (isMobile) setVisible(mobileRows.length);
   }, [isMobile, mobileRows.length]);
 
-  // Lås body-scroll mens detalj-overlayet dekker skjermen på mobil, så bakgrunnen
-  // ikke scroller bak.
+  // Lås body-scroll mens detalj-overlayet eller filter-arket dekker skjermen på
+  // mobil, så bakgrunnen ikke scroller bak.
   useEffect(() => {
-    if (!(isMobile && selectedId)) return;
+    if (!(isMobile && (selectedId || filterSheetOpen))) return;
     const prev = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
     return () => {
       document.body.style.overflow = prev;
     };
-  }, [isMobile, selectedId]);
+  }, [isMobile, selectedId, filterSheetOpen]);
 
   const clearAll = () => {
     setQuery('');
     setShowLowQuality(false);
+    setMobileFilters(emptyMobileFilters());
     const tab = getTab();
     tab?.clearFilter(true);
     tab?.clearHeaderFilter();
@@ -1127,6 +1199,15 @@ export function TeltViewer({ telt }: Props) {
                 ))}
               </select>
             </label>
+            <button
+              type="button"
+              className={`mobile-filter-btn${activeFilterCount ? ' has-active' : ''}`}
+              onClick={() => setFilterSheetOpen(true)}
+            >
+              Filtrer{activeFilterCount > 0 && <span className="filter-count">{activeFilterCount}</span>}
+            </button>
+          </div>
+          <div className="mobile-controls-row">
             <label className="quality-toggle">
               <input
                 type="checkbox"
@@ -1135,8 +1216,8 @@ export function TeltViewer({ telt }: Props) {
               />
               Vis utgått / tvilsomt
             </label>
+            <span className="stats">{visible} av {rows.length} telt</span>
           </div>
-          <span className="stats">{visible} av {rows.length} telt</span>
         </div>
       ) : (
         <div className="controls">
@@ -1166,6 +1247,17 @@ export function TeltViewer({ telt }: Props) {
           />
           <span className="stats">{visible} av {rows.length} telt</span>
         </div>
+      )}
+
+      {isMobile && filterSheetOpen && (
+        <MobileFilterSheet
+          allRows={rows}
+          filters={mobileFilters}
+          onChange={setMobileFilters}
+          onReset={() => setMobileFilters(emptyMobileFilters())}
+          onClose={() => setFilterSheetOpen(false)}
+          resultCount={mobileRows.length}
+        />
       )}
 
       <div className={`telt-layout ${selectedTelt ? 'with-detail' : ''}`}>
