@@ -539,6 +539,9 @@ export const COLUMN_GROUPS: { label: string; columns: ColumnDefinition[] }[] = [
         headerFilterEmptyCheck: minMaxFilterEmptyCheck,
         headerFilterLiveFilter: false,
         headerTooltip: 'Sammensatt 0-100 score: vektet snitt der kvalitet og popularitet teller 1 hver, konfidens på begge teller 0.5 hver. (kv + pop + 0.5·konfKv + 0.5·konfPop) / 3 × 10.',
+        // Null-score behandles som -Infinity slik at telt uten score alltid havner
+        // nederst — også når tabellen sorteres synkende (beste score øverst).
+        sorter: (a, b) => (a == null ? -Infinity : Number(a)) - (b == null ? -Infinity : Number(b)),
       },
       {
         title: 'Kvalitet',
@@ -1053,8 +1056,7 @@ export function TeltViewer({ telt }: Props) {
             placeholder: 'Ingen telt matcher filtrene',
             columnDefaults: { headerSort: true, resizable: true },
             initialSort: [
-              { column: 'merke', dir: 'asc' },
-              { column: 'navn', dir: 'asc' },
+              { column: 'score', dir: 'desc' },
             ],
             persistence: { columns: ['visible', 'width'] },
             persistenceID: 'telt-table-v1',
