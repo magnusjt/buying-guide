@@ -47,6 +47,9 @@
     top: 0;
     bottom: 0;
     width: min(440px, 100vw);
+    /* Base-regelen kapper høyden til calc(100vh - 240px); når draweren er fixed
+       og spenner top→bottom må den få lov til å fylle hele viewporten. */
+    max-height: 100dvh;
     z-index: 100;
     box-shadow: -4px 0 18px rgba(0, 0, 0, 0.12);
   }
@@ -396,4 +399,149 @@
   color: #78350f;
   background: #fffbeb;
   border-top: 1px solid #fde68a;
+}
+
+/* ---------- Mobil: kort-liste i stedet for tabell ---------- */
+
+/* Sticky kontroll-bar på mobil */
+.mobile-controls {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+  margin: 12px 0;
+  padding: 10px;
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+}
+.mobile-controls > input[type='search'] {
+  width: 100%;
+  min-width: 0;
+}
+.mobile-controls-row {
+  display: flex;
+  gap: 8px;
+  align-items: stretch;
+  flex-wrap: wrap;
+}
+.mobile-sort {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+  flex: 1;
+  min-width: 140px;
+}
+.mobile-sort select {
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--card);
+  font-size: 0.9rem;
+  color: var(--fg);
+}
+.mobile-controls .quality-toggle { align-self: center; }
+.mobile-controls .stats { margin-top: 0; }
+
+.telt-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 10px;
+}
+.telt-cards-empty {
+  padding: 40px 16px;
+  text-align: center;
+  color: var(--muted);
+}
+
+.telt-card {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px 14px;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+  box-shadow: var(--shadow);
+}
+.telt-card.card-selected {
+  border-color: var(--accent);
+  box-shadow: inset 3px 0 0 var(--accent), var(--shadow);
+}
+
+.card-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+.card-navn { font-weight: 600; font-size: 1rem; line-height: 1.3; }
+.card-score {
+  flex-shrink: 0;
+  min-width: 30px;
+  padding: 2px 8px;
+  border-radius: 6px;
+  color: #fff;
+  font-weight: 700;
+  font-size: 0.9rem;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.card-sub {
+  margin-top: 3px;
+  font-size: 0.82rem;
+  color: var(--muted);
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.card-merke { font-weight: 500; color: var(--fg); }
+.card-status { margin-left: 2px; }
+
+.card-chips {
+  margin-top: 10px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.card-chip {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 4px;
+  padding: 3px 8px;
+  border-radius: 6px;
+  background: #f3f4f6;
+  font-size: 0.8rem;
+  font-variant-numeric: tabular-nums;
+}
+.card-chip-label { color: var(--muted); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.03em; }
+.card-chip-value { color: var(--fg); font-weight: 500; }
+
+/* Backdrop bak detalj-overlayet på mobil */
+.detail-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  background: rgba(0, 0, 0, 0.4);
+}
+
+/* Telefon: full skjerm, redusert sidepadding */
+@media (max-width: 720px) {
+  body { padding: 0 12px 32px; }
+  h1 { font-size: 1.3rem; }
+
+  .telt-layout.with-detail .telt-detail {
+    width: 100vw;
+    max-width: 100vw;
+  }
 }

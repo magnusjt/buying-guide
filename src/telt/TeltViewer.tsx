@@ -18,7 +18,9 @@ import {
   escapeHtml,
 } from '../shared/formatters';
 import { TabulatorTable, type TabulatorHandle } from '../shared/TabulatorTable';
+import { useMediaQuery } from '../shared/useMediaQuery';
 import { TeltDetail } from './TeltDetail';
+import { TeltCardList } from './TeltCardList';
 import { ColumnPicker } from './ColumnPicker';
 
 /** Snitt-konfidens under denne grensen regnes som "lav" i kvalitets-filteret.
@@ -57,7 +59,7 @@ const HIDDEN_BY_DEFAULT = new Set<string>([
   'farger_liste',
 ]);
 
-interface Row {
+export interface Row {
   id: string;
   navn: string;
   merke: string;
@@ -455,7 +457,7 @@ const cellKonfidensSnitt = (cell: CellComponent) => {
   return `<span style="color:${color}; font-variant-numeric: tabular-nums;" title="Snitt-konfidens på tvers av alle properties (0-10)">${v.toFixed(1)}</span>`;
 };
 
-function scoreFarge(v: number): string {
+export function scoreFarge(v: number): string {
   if (v >= 8) return '#10b981';
   if (v >= 5) return '#f59e0b';
   if (v >= 2) return '#f97316';
@@ -463,7 +465,7 @@ function scoreFarge(v: number): string {
 }
 
 /** Farge for 0-100 Score (samme grenser som scoreFarge, men skalert *10). */
-function score100Farge(v: number): string {
+export function score100Farge(v: number): string {
   if (v >= 80) return '#10b981';
   if (v >= 50) return '#f59e0b';
   if (v >= 20) return '#f97316';
@@ -853,6 +855,57 @@ export const COLUMN_GROUPS: { label: string; columns: ColumnDefinition[] }[] = [
 
 const columns: ColumnDefinition[] = COLUMN_GROUPS.flatMap((g) => g.columns);
 
+/** Delt filter-predikat brukt av både Tabulator (desktop) og kort-lista (mobil),
+ *  så begge visninger skjuler/viser nøyaktig de samme radene. */
+export function matchesFilters(row: Row, query: string, showLowQuality: boolean): boolean {
+  const q = query.trim().toLowerCase();
+  if (q) {
+    const hay = [row.navn, row.merke, row.segment, row.konstruksjon, row.yttertelt_materiale]
+      .filter((v): v is string => Boolean(v))
+      .join(' ')
+      .toLowerCase();
+    if (!hay.includes(q)) return false;
+  }
+  if (!showLowQuality) {
+    if (row.status !== 'paa') return false;
+    if (row.konfidens_snitt == null || row.konfidens_snitt < LOW_CONF_THRESHOLD) return false;
+    if (keyFieldsFilled(row) < KEY_FIELDS_MIN) return false;
+  }
+  return true;
+}
+
+/** Sorterings-valg på mobil (ingen klikkbare kolonneheadere der). */
+export type SortKey = 'score' | 'pris' | 'vekt' | 'navn';
+export const SORT_OPTIONS: { key: SortKey; label: string }[] = [
+  { key: 'score', label: 'Score (beste først)' },
+  { key: 'pris', label: 'Pris (lav → høy)' },
+  { key: 'vekt', label: 'Vekt (lett → tung)' },
+  { key: 'navn', label: 'Navn (A → Å)' },
+];
+
+/** Sorterer en kopi av radene. Null-verdier legges alltid sist: ved score
+ *  (synkende) som -Infinity, ved pris/vekt (stigende) som +Infinity. */
+export function sortRows(rows: Row[], key: SortKey): Row[] {
+  const copy = [...rows];
+  const desc = (v: number | null) => (v == null ? -Infinity : v);
+  const asc = (v: number | null) => (v == null ? Infinity : v);
+  switch (key) {
+    case 'score':
+      copy.sort((a, b) => desc(b.score) - desc(a.score));
+      break;
+    case 'pris':
+      copy.sort((a, b) => asc(a.pris_nok) - asc(b.pris_nok));
+      break;
+    case 'vekt':
+      copy.sort((a, b) => asc(a.vekt_minimum_kg) - asc(b.vekt_minimum_kg));
+      break;
+    case 'navn':
+      copy.sort((a, b) => a.navn.localeCompare(b.navn, 'no'));
+      break;
+  }
+  return copy;
+}
+
 interface Props {
   telt: Telt[];
 }
@@ -877,12 +930,26 @@ export function TeltViewer({ telt }: Props) {
    *  klikk lar flagget være false så viewport ikke hopper unødig. */
   const wantsScrollRef = useRef(false);
 
+  /** Opptil 900px bruker vi kort-lista; bredere skjermer får Tabulator-tabellen.
+   *  Mellom 720-900px er kortene fortsatt fine, mens en full tabell ville krevd
+   *  mye horisontal scroll. */
+  const isMobile = useMediaQuery('(max-width: 900px)');
+
   const [query, setQuery] = useState('');
   /** Default false → kvalitetsfilteret er aktivt (skjuler utgått/tvilsomt).
    *  Når brukeren huker på "Vis utgått / tvilsomt", deaktiveres filteret. */
   const [showLowQuality, setShowLowQuality] = useState(false);
+  /** Sortering for mobil-lista (tabellen sorteres ved kolonneklikk i stedet). */
+  const [sortKey, setSortKey] = useState<SortKey>('score');
   const [visible, setVisible] = useState(rows.length);
   const [tableReady, setTableReady] = useState(false);
+
+  /** Filtrert + sortert rad-liste for mobil-visningen. Cheap nok (~234 rader)
+   *  til å regnes alltid; brukes også til prev/next-rekkefølge på mobil. */
+  const mobileRows = useMemo(
+    () => sortRows(rows.filter((r) => matchesFilters(r, query, showLowQuality)), sortKey),
+    [rows, query, showLowQuality, sortKey],
+  );
   const [selectedId, setSelectedId] = useState<string | null>(() => {
     if (typeof window === 'undefined') return null;
     const id = new URLSearchParams(window.location.search).get('telt');
@@ -971,6 +1038,23 @@ export function TeltViewer({ telt }: Props) {
     });
   }, [query, showLowQuality, tableReady]);
 
+  // På mobil finnes ingen Tabulator-instans som fyrer dataFiltered, så vi setter
+  // treff-telleren fra den JS-filtrerte lista i stedet.
+  useEffect(() => {
+    if (isMobile) setVisible(mobileRows.length);
+  }, [isMobile, mobileRows.length]);
+
+  // Lås body-scroll mens detalj-overlayet dekker skjermen på mobil, så bakgrunnen
+  // ikke scroller bak.
+  useEffect(() => {
+    if (!(isMobile && selectedId)) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, [isMobile, selectedId]);
+
   const clearAll = () => {
     setQuery('');
     setShowLowQuality(false);
@@ -980,7 +1064,11 @@ export function TeltViewer({ telt }: Props) {
   };
 
   const selectedTelt = selectedId ? teltById.get(selectedId) ?? null : null;
-  const visibleIds = selectedId ? getVisibleIds() : [];
+  const visibleIds = selectedId
+    ? isMobile
+      ? mobileRows.map((r) => r.id)
+      : getVisibleIds()
+    : [];
   const selIdx = selectedId ? visibleIds.indexOf(selectedId) : -1;
   const hasPrev = selIdx > 0;
   const hasNext = selIdx >= 0 && selIdx < visibleIds.length - 1;
@@ -997,15 +1085,23 @@ export function TeltViewer({ telt }: Props) {
             </span>
           )}
         </div>
-        <div className="meta">
-          Utgåtte modeller og oppføringer med svak datagrunnlag er skjult som default —
-          huk på <em>Vis utgått / tvilsomt</em> for å se alt. Sortér ved å klikke på kolonner ·
-          filtrér i toppraden eller bruk søkefeltet · klikk en rad for full detalj-visning ·
-          velg synlige kolonner i <em>Kolonner</em>-menyen · cellebakgrunn markerer kun lav konfidens (
-          <span className="konf-mid">gul</span>=4-6,{' '}
-          <span className="konf-low">oransje</span>=1-3,{' '}
-          <span className="konf-zero">rød</span>=0)
-        </div>
+        {isMobile ? (
+          <div className="meta">
+            Utgåtte modeller og oppføringer med svakt datagrunnlag er skjult som default —
+            huk på <em>Vis utgått / tvilsomt</em> for å se alt. Søk og sortér over · trykk et kort
+            for full detalj-visning.
+          </div>
+        ) : (
+          <div className="meta">
+            Utgåtte modeller og oppføringer med svak datagrunnlag er skjult som default —
+            huk på <em>Vis utgått / tvilsomt</em> for å se alt. Sortér ved å klikke på kolonner ·
+            filtrér i toppraden eller bruk søkefeltet · klikk en rad for full detalj-visning ·
+            velg synlige kolonner i <em>Kolonner</em>-menyen · cellebakgrunn markerer kun lav konfidens (
+            <span className="konf-mid">gul</span>=4-6,{' '}
+            <span className="konf-low">oransje</span>=1-3,{' '}
+            <span className="konf-zero">rød</span>=0)
+          </div>
+        )}
         <div className="ai-disclaimer">
           ⚠️ <strong>Denne databasen er generert av AI.</strong> Konfidens-tallet sier hvor sikre vi er
           på at AI-en har funnet <em>riktig</em> verdi — høyere konfidens = mer sannsynlig korrekt, men
@@ -1014,35 +1110,68 @@ export function TeltViewer({ telt }: Props) {
         </div>
       </header>
 
-      <div className="controls">
-        <input
-          type="search"
-          placeholder="Søk i navn, merke, segment, materiale …"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-        />
-        <label
-          className="quality-toggle"
-          title={`Som default skjules telt som er utgått, har snitt-konfidens under ${LOW_CONF_THRESHOLD}, eller mangler mer enn ${5 - KEY_FIELDS_MIN} av nøkkelfeltene (pris, vekt min, soveplasser, sesong, vannsøyle). Huk på for å vise dem også.`}
-        >
+      {isMobile ? (
+        <div className="controls mobile-controls">
           <input
-            type="checkbox"
-            checked={showLowQuality}
-            onChange={(e) => setShowLowQuality(e.target.checked)}
+            type="search"
+            placeholder="Søk i navn, merke, materiale …"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
           />
-          Vis utgått / tvilsomt
-        </label>
-        <button type="button" onClick={clearAll}>Nullstill filtre</button>
-        <ColumnPicker
-          groups={COLUMN_GROUPS}
-          tableHandle={tableHandle}
-          hiddenByDefault={HIDDEN_BY_DEFAULT}
-          tableReady={tableReady}
-        />
-        <span className="stats">{visible} av {rows.length} telt</span>
-      </div>
+          <div className="mobile-controls-row">
+            <label className="mobile-sort">
+              Sortér
+              <select value={sortKey} onChange={(e) => setSortKey(e.target.value as SortKey)}>
+                {SORT_OPTIONS.map((o) => (
+                  <option key={o.key} value={o.key}>{o.label}</option>
+                ))}
+              </select>
+            </label>
+            <label className="quality-toggle">
+              <input
+                type="checkbox"
+                checked={showLowQuality}
+                onChange={(e) => setShowLowQuality(e.target.checked)}
+              />
+              Vis utgått / tvilsomt
+            </label>
+          </div>
+          <span className="stats">{visible} av {rows.length} telt</span>
+        </div>
+      ) : (
+        <div className="controls">
+          <input
+            type="search"
+            placeholder="Søk i navn, merke, segment, materiale …"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+          />
+          <label
+            className="quality-toggle"
+            title={`Som default skjules telt som er utgått, har snitt-konfidens under ${LOW_CONF_THRESHOLD}, eller mangler mer enn ${5 - KEY_FIELDS_MIN} av nøkkelfeltene (pris, vekt min, soveplasser, sesong, vannsøyle). Huk på for å vise dem også.`}
+          >
+            <input
+              type="checkbox"
+              checked={showLowQuality}
+              onChange={(e) => setShowLowQuality(e.target.checked)}
+            />
+            Vis utgått / tvilsomt
+          </label>
+          <button type="button" onClick={clearAll}>Nullstill filtre</button>
+          <ColumnPicker
+            groups={COLUMN_GROUPS}
+            tableHandle={tableHandle}
+            hiddenByDefault={HIDDEN_BY_DEFAULT}
+            tableReady={tableReady}
+          />
+          <span className="stats">{visible} av {rows.length} telt</span>
+        </div>
+      )}
 
       <div className={`telt-layout ${selectedTelt ? 'with-detail' : ''}`}>
+        {isMobile ? (
+          <TeltCardList rows={mobileRows} selectedId={selectedId} onSelect={setSelectedId} />
+        ) : (
         <TabulatorTable
           ref={tableHandle}
           className="telt-table"
@@ -1079,6 +1208,10 @@ export function TeltViewer({ telt }: Props) {
             },
           }}
         />
+        )}
+        {selectedTelt && isMobile && (
+          <div className="detail-backdrop" onClick={() => setSelectedId(null)} />
+        )}
         {selectedTelt && (
           <TeltDetail
             telt={selectedTelt}
