@@ -8,6 +8,12 @@ markedstatus, priser (Prisjakt), de beste nettbutikkene, dimensjoner og lenker t
 tester og forumdiskusjoner — alt med kildehenvisninger og en konfidens-score per
 datafelt.
 
+Dataene samles hovedsaklig inn via AI. Prosjektet er samtidig et eksperiment med
+å lagre en **konfidens-score** (0–10) per datafelt — en måte å håndtere at
+AI-innsamlet informasjon kan være feilaktig: hvert felt merkes med hvor godt det
+faktisk er verifisert mot en kilde, slik at usikker data blir synlig framfor å
+fremstå som fakta.
+
 ## Stack
 
 React 19 + TypeScript, bygget med Vite (én side per produkttype). Produktdata
