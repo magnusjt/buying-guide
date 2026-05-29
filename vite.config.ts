@@ -10,7 +10,10 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 //   1. opprett src/<type>/index.html og src/<type>/main.tsx
 //   2. legg <type> til i input-objektet under
 // Output: dist/index.html (landing) + dist/<type>/index.html per produkttype.
-export default defineConfig({
+export default defineConfig(({ command }) => ({
+  // GitHub Pages serverer prosjekt-repoet på https://magnusjt.github.io/buying-guide/.
+  // Asset-URLer må derfor prefikses med repo-navnet i produksjon. I dev beholder vi '/'.
+  base: command === 'build' ? '/buying-guide/' : '/',
   plugins: [react()],
   root: resolve(__dirname, 'src'),
   publicDir: false,
@@ -30,4 +33,4 @@ export default defineConfig({
       allow: [resolve(__dirname, '.')],
     },
   },
-});
+}));
